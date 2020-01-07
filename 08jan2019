@@ -1,0 +1,11 @@
+step 1:  impot data in csv with encode charatcer #
+
+step 2:  input the search keyword : (Please input serach keyword )
+
+step 3: Click the each CARDs (get each card url)
+
+Step 4: Goto each url and get html page
+
+step 5: Get owner name and location from card url
+
+step 6: store all values on csv
