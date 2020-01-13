@@ -1,0 +1,110 @@
+# importing the required libraries
+
+from bs4 import BeautifulSoup as soup
+import requests
+import csv
+
+# Opening the file to write
+def file():
+    file_name = 'ebay_wavery_hills.csv'
+    data_to_file = open(file_name, 'w', newline='')
+    csv_writer = csv.writer(data_to_file, delimiter = ',')
+    csv_writer.writerow(["ebay_upc", "ebay_seller_url", "ebay_url", "ebay_item_number", "ebay_title", "ebay_product_condition", "ebay_price", "ebay_seller", "ebay_mpn", "ebay_brand"])
+    print("file is ready to write")
+
+def main():
+    file()
+
+    items_per_page = 0
+    for pages in range(1,13):
+        print("Reading Page No.  " + str(pages))
+        try:
+        #   if pages > 3:
+        #       debug = ''
+
+            if items_per_page == 0:
+                url = 'https://www.ebay.com/sch/m.html?_nkw=&_armrs=1&_from=&_ssn=waverlyhills1&_pgn=1&rt=nc'
+            else:
+                url = 'https://www.ebay.com/sch/m.html?_nkw=&_armrs=1&_from=&_ssn=waverlyhills1&_pgn=' + str(pages) + '&_skc=' + str(items_per_page) + '&rt=nc'
+            ureq = requests.get(url)
+            page_soup = soup(ureq.content, 'html5lib')
+            table = page_soup.findAll('h3', {'class': 'lvtitle'})
+            print(len(table))
+
+            b = 1
+            for rows in table:
+                try:
+
+                    ebay_url = 'https://www.ebay.com/sch/waverlyhills1/m.html?_nkw=&_armrs=1&_from='
+                    try:
+                        ebay_title = rows.text.strip()
+                    except Exception:
+                        print("no title for Row  :  " +str(b))
+                        pass
+                   
+                    url_details = rows.find('a').attrs['href']
+                    item_url_request = requests.get(url_details)
+                    item_soup = soup(item_url_request.content, 'html5lib')
+                    
+                    try:
+                        ebay_upc = item_soup.find('h2', {'itemprop' : 'gtin13'}).text.strip()                       
+                    except Exception:
+                        print("No UPC for Row  :  " +str(b))
+                        pass
+                    try:
+                        ebay_seller_url = item_soup.find('div', {'class', 'mbg vi-VR-margBtm3'}).a['href']                        
+                    except Exception:
+                        print("no Seller URL for Row  :  " +str(b))
+                        pass
+                    try:
+                        ebay_item_number = item_soup.find('div', {'id' : 'descItemNumber'}).text.strip()                       
+                    except Exception:
+                        print("no ITEM NUMBER for Row  :  " +str(b))
+                        pass
+                    try:
+                        ebay_product_condition = item_soup.find('div', {'id': 'vi-itm-cond'}).text.strip()                       
+                    except Exception:
+                        print("no condition for Row  :  " +str(b))
+                        pass
+                    try:
+                        ebay_price = item_soup.find('span', {'id' : 'convbinPrice'}).text
+                    except Exception:
+                        print("no PRICE for Row  :  " +str(b))
+                        pass
+                    try:
+                        ebay_seller = item_soup.find('span', {'class' : 'mbg-nw'}).text.strip()
+                    except Exception:
+                        print("no SELLER for Row  :  " +str(b))
+                        pass
+                    try:
+                        ebay_mpn = item_soup.find('h2', {'itemprop': 'mpn'}).text.strip()
+                    except Exception:
+                        print("no MPN for Row  :  " +str(b))
+                        pass
+                    try:
+                        ebay_brand = item_soup.find('h2', {'itemscope' : 'itemscope'}).find('span').text.strip()
+                        # item_soup.findAll('span', {'itemprop' : 'name'})[6].text.strip()
+                    except Exception:
+                        print("no BRAND for Row  :  " +str(b))
+                        pass
+
+                    print('PAGE  :  ' +str(pages)+ '  :  Row completed  :  ' + str(b))
+                    print('Row  :  ' +str(b)+ ' : Data : 1. '+ebay_url+ ' 2. '+ebay_title + ' 3. '+ebay_upc+ ' 4. ' +ebay_seller_url+
+                    ' 5. ' +ebay_item_number+ ' 6. ' +ebay_product_condition+ ' 7. '+ebay_price+ ' 8. '+ebay_seller+' 9. '+ebay_mpn+' 10. ' + ebay_brand)
+
+                    b = b+1
+                except Exception:
+                    print(' - - ->> Inner-Page level ERROR NO  :  ' + str(pages) + '  , ROW NO : ' + str(b))
+                    b = b + 1
+                    pass
+
+            items_per_page += 50
+            print('Completed page No. ' + str(pages))
+
+        except Exception:
+            print("Page Level ERROR NO :  " + str(pages))
+            items_per_page += 50
+            pass
+
+if __name__ == '__main__':
+    main()
